@@ -1,4 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  calculateFuelConsumption,
+  calculateTotalDrivingRange,
+} from '@/utils/records';
 import { useEffect, useState } from 'react';
 import {
     ScrollView,
@@ -13,6 +17,7 @@ export default function StatisticsScreen() {
   const [fuelCount, setFuelCount] = useState(0);
   const [maintenanceCount, setMaintenanceCount] = useState(0);
   const [consumption, setConsumption] = useState('0');
+  const [totalDrivingRange, setTotalDrivingRange] = useState(0);
 
   useEffect(() => {
     loadStatistics();
@@ -41,24 +46,8 @@ export default function StatisticsScreen() {
       });
 
       setFuelCost(totalFuelCost);
-
-      if (logs.length >= 2) {
-        const last = logs[logs.length - 1];
-        const prev = logs[logs.length - 2];
-
-        const km =
-          Number(last.odometer) -
-          Number(prev.odometer);
-
-        const liters =
-          Number(last.liters);
-
-        if (km > 0) {
-          setConsumption(
-            ((liters * 100) / km).toFixed(2)
-          );
-        }
-      }
+      setConsumption(calculateFuelConsumption(logs) || '0');
+      setTotalDrivingRange(calculateTotalDrivingRange(logs));
     }
 
     if (maintenanceData) {
@@ -118,6 +107,15 @@ export default function StatisticsScreen() {
         </Text>
         <Text style={styles.label}>
           لتر / 100 كم
+        </Text>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.value}>
+          {totalDrivingRange} كم
+        </Text>
+        <Text style={styles.label}>
+          إجمالي المسافة المقطوعة
         </Text>
       </View>
 
