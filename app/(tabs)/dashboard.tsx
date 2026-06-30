@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
+    Pressable,
     ScrollView,
     StyleSheet,
     Text,
@@ -11,6 +12,7 @@ import {
 
 export default function Dashboard() {
   const [oilWarning, setOilWarning] = useState('');
+  const [fabOpen, setFabOpen] = useState(false);
 
   useEffect(() => {
     loadOilStatus();
@@ -28,8 +30,8 @@ export default function Dashboard() {
 
       if (logs.length === 0) return;
 
-      const currentKm = Number(
-        logs[logs.length - 1].odometer
+      const currentKm = Math.max(
+        ...logs.map((item: any) => Number(item.odometer || 0))
       );
 
       const remaining =
@@ -49,114 +51,122 @@ export default function Dashboard() {
     }
   };
 
+  const openRoute = (route: '/(tabs)/fuel' | '/(tabs)/oil-change' | '/(tabs)/maintenance') => {
+    setFabOpen(false);
+    router.push(route);
+  };
+
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={{ paddingBottom: 30 }}>
+    <View style={styles.screen}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={{ paddingBottom: 120 }}>
 
-      <Text style={styles.title}>لوحة التحكم</Text>
+        <Text style={styles.title}>لوحة التحكم</Text>
 
-      {oilWarning !== '' && (
-        <View style={styles.warningBox}>
-          <Text style={styles.warningText}>
-            {oilWarning}
+        {oilWarning !== '' && (
+          <View style={styles.warningBox}>
+            <Text style={styles.warningText}>
+              {oilWarning}
+            </Text>
+          </View>
+        )}
+
+        <TouchableOpacity
+          style={styles.card}
+          onPress={() => router.push('/(tabs)/car-info')}>
+          <Text style={styles.cardTitle}>
+            🚗 بيانات السيارة
           </Text>
-        </View>
+          <Text style={styles.cardText}>
+            عرض وتعديل بيانات السيارة
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.card}
+          onPress={() => router.push('/(tabs)/statistics')}>
+          <Text style={styles.cardTitle}>
+            📊 إحصائيات السيارة
+          </Text>
+          <Text style={styles.cardText}>
+            عرض المصروفات والاستهلاك
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.card}
+          onPress={() => router.push('/(tabs)/fuel-history')}>
+          <Text style={styles.cardTitle}>
+            📋 سجل التفويلات
+          </Text>
+          <Text style={styles.cardText}>
+            عرض جميع التفويلات السابقة
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.card}
+          onPress={() => router.push('/(tabs)/oil-status')}>
+          <Text style={styles.cardTitle}>
+            📊 حالة الزيت
+          </Text>
+          <Text style={styles.cardText}>
+            متابعة التغيير القادم
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.card}
+          onPress={() => router.push('/(tabs)/maintenance-history')}>
+          <Text style={styles.cardTitle}>
+            📋 سجل الصيانات
+          </Text>
+          <Text style={styles.cardText}>
+            عرض جميع أعمال الصيانة
+          </Text>
+        </TouchableOpacity>
+      </ScrollView>
+
+      {fabOpen && (
+        <Pressable style={styles.backdrop} onPress={() => setFabOpen(false)}>
+          <View style={styles.actionMenu}>
+            <TouchableOpacity
+              style={styles.actionItem}
+              onPress={() => openRoute('/(tabs)/fuel')}>
+              <Text style={styles.actionText}>⛽ إضافة تفويلة</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.actionItem}
+              onPress={() => openRoute('/(tabs)/oil-change')}>
+              <Text style={styles.actionText}>🛢️ إضافة تغيير زيت</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.actionItem}
+              onPress={() => openRoute('/(tabs)/maintenance')}>
+              <Text style={styles.actionText}>🔧 إضافة صيانة</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
       )}
 
       <TouchableOpacity
-        style={styles.card}
-        onPress={() => router.push('/(tabs)/car-info')}>
-        <Text style={styles.cardTitle}>
-          🚗 بيانات السيارة
-        </Text>
-        <Text style={styles.cardText}>
-          عرض وتعديل بيانات السيارة
-        </Text>
+        style={styles.fab}
+        onPress={() => setFabOpen((current) => !current)}>
+        <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.card}
-        onPress={() => router.push('/(tabs)/statistics')}>
-        <Text style={styles.cardTitle}>
-          📊 إحصائيات السيارة
-        </Text>
-        <Text style={styles.cardText}>
-          عرض المصروفات والاستهلاك
-        </Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.card}
-        onPress={() => router.push('/(tabs)/fuel')}>
-        <Text style={styles.cardTitle}>
-          ⛽ إضافة تفويلة
-        </Text>
-        <Text style={styles.cardText}>
-          تسجيل البنزين واستهلاك الوقود
-        </Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.card}
-        onPress={() => router.push('/(tabs)/fuel-history')}>
-        <Text style={styles.cardTitle}>
-          📋 سجل التفويلات
-        </Text>
-        <Text style={styles.cardText}>
-          عرض جميع التفويلات السابقة
-        </Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.card}
-        onPress={() => router.push('/(tabs)/oil-change')}>
-        <Text style={styles.cardTitle}>
-          🛢️ تغيير الزيت
-        </Text>
-        <Text style={styles.cardText}>
-          تسجيل تغيير الزيت
-        </Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.card}
-        onPress={() => router.push('/(tabs)/oil-status')}>
-        <Text style={styles.cardTitle}>
-          📊 حالة الزيت
-        </Text>
-        <Text style={styles.cardText}>
-          متابعة التغيير القادم
-        </Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.card}
-        onPress={() => router.push('/(tabs)/maintenance')}>
-        <Text style={styles.cardTitle}>
-          🔧 إضافة صيانة
-        </Text>
-        <Text style={styles.cardText}>
-          تسجيل أعمال الصيانة
-        </Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.card}
-        onPress={() => router.push('/(tabs)/maintenance-history')}>
-        <Text style={styles.cardTitle}>
-          📋 سجل الصيانات
-        </Text>
-        <Text style={styles.cardText}>
-          عرض جميع أعمال الصيانة
-        </Text>
-      </TouchableOpacity>
-
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: '#020817',
+  },
+
   container: {
     flex: 1,
     backgroundColor: '#020817',
@@ -203,5 +213,52 @@ const styles = StyleSheet.create({
     color: '#CBD5E1',
     marginTop: 8,
     textAlign: 'right',
+  },
+
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(2, 8, 23, 0.35)',
+  },
+
+  actionMenu: {
+    position: 'absolute',
+    right: 20,
+    bottom: 96,
+    width: 220,
+    backgroundColor: '#172033',
+    borderRadius: 16,
+    padding: 10,
+  },
+
+  actionItem: {
+    backgroundColor: '#020817',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 8,
+  },
+
+  actionText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    textAlign: 'right',
+  },
+
+  fab: {
+    position: 'absolute',
+    right: 24,
+    bottom: 28,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#00FFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  fabText: {
+    color: '#000',
+    fontSize: 38,
+    lineHeight: 42,
+    fontWeight: 'bold',
   },
 });
