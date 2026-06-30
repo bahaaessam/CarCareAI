@@ -1,6 +1,8 @@
 console.log('Maintenance Loaded');
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { DatePickerField } from '@/components/date-picker-field';
+import { formatDate } from '@/utils/records';
 import { useState } from 'react';
 import {
     StyleSheet,
@@ -11,6 +13,7 @@ import {
 } from 'react-native';
 
 export default function MaintenanceScreen() {
+  const [date, setDate] = useState(formatDate(new Date()));
   const [serviceName, setServiceName] = useState('');
   const [odometer, setOdometer] = useState('');
   const [cost, setCost] = useState('');
@@ -23,7 +26,7 @@ export default function MaintenanceScreen() {
         Number(odometer) + Number(nextKm);
 
       const maintenanceData = {
-        date: new Date().toLocaleDateString(),
+        date,
         serviceName,
         odometer,
         cost,
@@ -55,6 +58,7 @@ export default function MaintenanceScreen() {
 
       alert('تم حفظ الصيانة بنجاح');
 
+      setDate(formatDate(new Date()));
       setServiceName('');
       setOdometer('');
       setCost('');
@@ -71,6 +75,12 @@ export default function MaintenanceScreen() {
       <Text style={styles.title}>
         إضافة صيانة
       </Text>
+
+      <DatePickerField
+        label="التاريخ"
+        value={date}
+        onChange={setDate}
+      />
 
       <TextInput
         style={styles.input}
