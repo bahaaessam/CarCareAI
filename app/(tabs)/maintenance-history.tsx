@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { sortByDateDesc } from '@/utils/records';
 import { useEffect, useState } from 'react';
 import {
     FlatList,
@@ -8,8 +9,17 @@ import {
     View,
 } from 'react-native';
 
+type MaintenanceHistoryItem = {
+  date?: string;
+  serviceName?: string;
+  odometer?: string;
+  cost?: string;
+  notes?: string;
+  storageIndex: number;
+};
+
 export default function MaintenanceHistoryScreen() {
-  const [logs, setLogs] = useState<any[]>([]);
+  const [logs, setLogs] = useState<MaintenanceHistoryItem[]>([]);
 
   useEffect(() => {
     loadLogs();
@@ -23,16 +33,29 @@ export default function MaintenanceHistoryScreen() {
     console.log('Loaded Maintenance:', data);
 
     if (data) {
-      setLogs(JSON.parse(data));
+      const parsedLogs = JSON.parse(data).map((item: any, index: number) => ({
+        ...item,
+        storageIndex: index,
+      }));
+
+      setLogs(sortByDateDesc(parsedLogs));
+    } else {
+      setLogs([]);
     }
   };
 
   const deleteLog = async (indexToDelete: number) => {
-    const updatedLogs = logs.filter(
-      (_, index) => index !== indexToDelete
+    const oldData = await AsyncStorage.getItem('maintenanceLogs');
+    const storedLogs = oldData ? JSON.parse(oldData) : [];
+    const updatedLogs = storedLogs.filter(
+      (_: any, index: number) => index !== indexToDelete
     );
+    const visibleLogs = updatedLogs.map((item: any, index: number) => ({
+      ...item,
+      storageIndex: index,
+    }));
 
-    setLogs(updatedLogs);
+    setLogs(sortByDateDesc(visibleLogs));
 
     await AsyncStorage.setItem(
       'maintenanceLogs',
@@ -48,8 +71,8 @@ export default function MaintenanceHistoryScreen() {
 
       <FlatList
         data={logs}
-        keyExtractor={(_, index) => index.toString()}
-        renderItem={({ item, index }) => (
+        keyExtractor={(item) => item.storageIndex.toString()}
+        renderItem={({ item }) => (
           <View style={styles.card}>
             <Text style={styles.item}>
               📅 التاريخ: {item.date}
@@ -73,7 +96,7 @@ export default function MaintenanceHistoryScreen() {
 
             <TouchableOpacity
               style={styles.deleteButton}
-              onPress={() => deleteLog(index)}>
+              onPress={() => deleteLog(item.storageIndex)}>
               <Text style={styles.deleteText}>
                 🗑️ حذف
               </Text>
