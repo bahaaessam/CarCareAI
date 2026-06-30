@@ -1,4 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { DatePickerField } from '@/components/date-picker-field';
+import { formatDate } from '@/utils/records';
 import { useState } from 'react';
 import {
     StyleSheet,
@@ -9,6 +11,7 @@ import {
 } from 'react-native';
 
 export default function OilChangeScreen() {
+  const [date, setDate] = useState(formatDate(new Date()));
   const [odometer, setOdometer] = useState('');
   const [oilType, setOilType] = useState('');
   const [filterChanged, setFilterChanged] = useState('');
@@ -20,7 +23,7 @@ export default function OilChangeScreen() {
       const nextChangeKm = currentKm + Number(nextKm);
 
       const oilData = {
-        date: new Date().toLocaleDateString(),
+        date,
         odometer,
         oilType,
         filterChanged,
@@ -34,6 +37,11 @@ export default function OilChangeScreen() {
       );
 
       alert('تم حفظ بيانات الزيت');
+      setDate(formatDate(new Date()));
+      setOdometer('');
+      setOilType('');
+      setFilterChanged('');
+      setNextKm('');
     } catch (error) {
       console.log(error);
       alert('حدث خطأ');
@@ -43,6 +51,12 @@ export default function OilChangeScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>تغيير الزيت</Text>
+
+      <DatePickerField
+        label="التاريخ"
+        value={date}
+        onChange={setDate}
+      />
 
       <TextInput
         style={styles.input}
