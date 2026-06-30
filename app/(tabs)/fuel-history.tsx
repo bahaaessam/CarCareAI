@@ -1,5 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
+import {
+  calculateFuelConsumption,
+  calculateTotalDrivingRange,
+  sortByDateDesc,
+} from '@/utils/records';
 import { useCallback, useState } from 'react';
 import {
     FlatList,
@@ -10,8 +15,17 @@ import {
 } from 'react-native';
 console.log('Fuel History Loaded');
 
+type FuelHistoryItem = {
+  date?: string;
+  odometer?: string;
+  liters?: string;
+  price?: string;
+  fuelType?: string;
+  storageIndex: number;
+};
+
 export default function FuelHistoryScreen() {
-  const [logs, setLogs] = useState<any[]>([]);
+  const [logs, setLogs] = useState<FuelHistoryItem[]>([]);
 
   const latestOdometer =
   logs.length > 0
@@ -21,6 +35,9 @@ export default function FuelHistoryScreen() {
         )
       )
     : 'لا يوجد';
+
+  const fuelConsumption = calculateFuelConsumption(logs);
+  const totalDrivingRange = calculateTotalDrivingRange(logs);
 
   useFocusEffect(
   useCallback(() => {
@@ -34,16 +51,29 @@ export default function FuelHistoryScreen() {
   console.log('Loaded Fuel Logs:', data);
 
   if (data) {
-    setLogs(JSON.parse(data));
+    const parsedLogs = JSON.parse(data).map((item: any, index: number) => ({
+      ...item,
+      storageIndex: index,
+    }));
+
+    setLogs(sortByDateDesc(parsedLogs));
+  } else {
+    setLogs([]);
   }
 };
 
   const deleteLog = async (indexToDelete: number) => {
-    const updatedLogs = logs.filter(
-      (_, index) => index !== indexToDelete
+    const oldData = await AsyncStorage.getItem('fuelLogs');
+    const storedLogs = oldData ? JSON.parse(oldData) : [];
+    const updatedLogs = storedLogs.filter(
+      (_: any, index: number) => index !== indexToDelete
     );
+    const visibleLogs = updatedLogs.map((item: any, index: number) => ({
+      ...item,
+      storageIndex: index,
+    }));
 
-    setLogs(updatedLogs);
+    setLogs(sortByDateDesc(visibleLogs));
 
     await AsyncStorage.setItem(
       'fuelLogs',
@@ -51,16 +81,6 @@ export default function FuelHistoryScreen() {
     );
   };
 
-  const fuelConsumption =
-  logs.length >= 2
-    ? (
-        (Number(logs[logs.length - 1].liters) * 100) /
-        (
-          Number(logs[logs.length - 1].odometer) -
-          Number(logs[logs.length - 2].odometer)
-        )
-      ).toFixed(2)
-    : null;
   return (
     <View style={styles.container}>
       <Text style={styles.title}>سجل التفويلات</Text>
@@ -72,6 +92,10 @@ export default function FuelHistoryScreen() {
     marginBottom: 10,
   }}>
   آخر قراءة عداد: {latestOdometer}
+</Text>
+
+<Text style={styles.rangeText}>
+  إجمالي المسافة المقطوعة: {totalDrivingRange} كم
 </Text>
 
 {fuelConsumption && (
@@ -88,8 +112,8 @@ export default function FuelHistoryScreen() {
 
       <FlatList
         data={logs}
-        keyExtractor={(_, index) => index.toString()}
-        renderItem={({ item, index }) => (
+        keyExtractor={(item) => item.storageIndex.toString()}
+        renderItem={({ item }) => (
           <View style={styles.card}>
             <Text style={styles.item}>
               📅 التاريخ: {item.date}
@@ -113,7 +137,7 @@ export default function FuelHistoryScreen() {
 
             <TouchableOpacity
               style={styles.deleteButton}
-              onPress={() => deleteLog(index)}>
+              onPress={() => deleteLog(item.storageIndex)}>
               <Text style={styles.deleteText}>
                 🗑️ حذف
               </Text>
@@ -139,6 +163,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 40,
     marginBottom: 20,
+  },
+
+  rangeText: {
+    color: '#CBD5E1',
+    textAlign: 'center',
+    marginBottom: 15,
+    fontWeight: 'bold',
   },
 
   card: {
