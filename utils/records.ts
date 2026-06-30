@@ -8,7 +8,13 @@ export type FuelLog = DatedRecord & {
   totalPrice?: string | number;
 };
 
-export const formatDate = (date: Date) => date.toISOString().split('T')[0];
+export const formatDate = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+};
 
 export const parseRecordDate = (value?: string) => {
   if (!value) return 0;
@@ -24,7 +30,9 @@ export const parseRecordDate = (value?: string) => {
   if (parts.length === 3) {
     const [first, second, third] = parts;
     const year = third < 100 ? 2000 + third : third;
-    const fallback = new Date(year, second - 1, first).getTime();
+    const day = second > 12 ? second : first;
+    const month = second > 12 ? first : second;
+    const fallback = new Date(year, month - 1, day).getTime();
 
     return Number.isNaN(fallback) ? 0 : fallback;
   }
