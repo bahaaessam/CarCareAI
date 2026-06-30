@@ -1,4 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { DatePickerField } from '@/components/date-picker-field';
+import { formatDate } from '@/utils/records';
 import { useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
@@ -18,10 +20,7 @@ export default function FuelScreen() {
   const [image, setImage] = useState<string | null>(null);
 
   const [totalPrice, setTotalPrice] = useState('');
-
-  const [date, setDate] = useState(
-  new Date().toLocaleDateString()
-);
+  const [date, setDate] = useState(formatDate(new Date()));
 
   const [permission, requestPermission] = useCameraPermissions();
   const [showCamera, setShowCamera] = useState(false);
@@ -58,6 +57,7 @@ const saveFuel = async () => {
     const fuelData = {
       date,
       odometer,
+      price,
       liters,
       totalPrice,
       fuelType,
@@ -80,8 +80,10 @@ console.log('Saved Fuel Logs:', logs);
 
     setOdometer('');
     setPrice('');
+    setTotalPrice('');
     setFuelType('');
     setImage(null);
+    setDate(formatDate(new Date()));
   } catch (error) {
     console.log(error);
     alert('حدث خطأ أثناء الحفظ');
@@ -121,12 +123,10 @@ console.log('Saved Fuel Logs:', logs);
         />
       )}
 
-<TextInput
-  style={styles.input}
-  placeholder="التاريخ"
-  placeholderTextColor="#666"
+<DatePickerField
+  label="التاريخ"
   value={date}
-  onChangeText={setDate}
+  onChange={setDate}
 />
 
       <TextInput
@@ -150,6 +150,7 @@ console.log('Saved Fuel Logs:', logs);
         style={styles.input}
         placeholder="سعر اللتر"
         placeholderTextColor="#666"
+        keyboardType="numeric"
         value={price}
         onChangeText={setPrice}
       />
